@@ -199,13 +199,13 @@ func colorVariableReplaceForJS(content string) string {
 
 func disableSentry(input string) string {
 	// utils.Replace(&input, `sentry\.install\(\)[,;]`, "")
-	utils.Replace(&input, `;if\(\w+\.type===\w+\.\w+\.LOG_INTERACTION`, ";return${0}")
-	utils.Replace(&input, `\("https://\w+@sentry.io/\d+"`, `;("https://null@127.0.0.1/0"`)
+	utils.HookReplace("Sentry disable", &input, `;if\(\w+\.type===\w+\.\w+\.LOG_INTERACTION`, ";return${0}")
+	utils.HookReplace("Sentry disable 2", &input, `\("https://\w+@sentry.io/\d+"`, `;("https://null@127.0.0.1/0"`)
 	return input
 }
 
 func disableLogging(input string) string {
-	utils.Replace(&input, `sp://logging/v3/\w+`, "")
+	utils.HookReplace("Disable logging", &input, `sp://logging/v3/\w+`, "")
 	return input
 }
 
@@ -230,48 +230,58 @@ func removeRTL(input string) string {
 
 func exposeAPIs_main(input string) string {
 	// Player
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.Player.origin",
 		&input,
 		`this\._cosmos=(\w+),this\._defaultFeatureVersion=\w+`,
 		`(globalThis.Spicetify.Player.origin=this),${0}`)
 
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.Player.origin2",
 		&input,
 		`,this.player=\w+,`,
 		`,(globalThis.Spicetify.Player.origin2=this)${0}`)
 
 	// Show Notification
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.showNotification",
 		&input,
 		`,(\w+)=(\(\w+=\w+\.dispatch)`,
 		`;globalThis.Spicetify.showNotification=(message)=>${1}({message});const ${1}=${2}`)
 
 	// Remove list of exclusive shows
-	utils.Replace(
+	utils.HookReplace(
+		"Remove shows list",
 		&input,
 		`\["spotify:show.+?\]`,
 		`[]`)
 
 	// Remove Star Wars easter eggs since it aggressively
 	// listens to keystroke, checking URIs at all time
-	utils.Replace(
+	utils.HookReplace(
+		"Remove star wars easter egg",
 		&input,
 		`\w+\(\)\.createElement\(\w+,\{onChange:this\.handleSaberStateChange\}\),`,
 		"")
 
 	// React Hook
-	utils.ReplaceOnce(
+	utils.HookReplaceOnce(
+		"Spicetify.React",
 		&input,
 		`\w+=\(\w+,(\w+)\.lazy\)\(\(function\(\)\{return Promise\.resolve\(\)\.then\(\w+\.bind\(\w+,\w+\)\)\}\)\);`,
 		`${0}Spicetify.React=${1};`)
 
-	utils.Replace(
+	utils.HookReplace(
+		"testid attribute removal",
 		&input,
 		`"data-testid":`,
 		`"":`)
 
 	reAllAPIPromises := regexp.MustCompile(`return (\w+=\w+\.sent),\w+\.next=\d,(Promise.all\(\[(\w\.getSession\(\),)([\w\(\)\.,]+?)\]\))([;,])`)
 	allAPIPromises := reAllAPIPromises.FindAllStringSubmatch(input, -1)
+	if len(allAPIPromises) == 0 {
+		utils.PrintWarning("Failed to find API promises (Spicetify.Platform hook fail)")
+	}
 	for _, found := range allAPIPromises {
 		splitted := strings.Split(found[3] + found[4], ",")
 		if len(splitted) > 15 { // Actual number is about 24
@@ -296,7 +306,8 @@ func exposeAPIs_main(input string) string {
 	}
 
 	// Profile Menu hook v1.1.56
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.Menu",
 		&input,
 		`\{listItems:\w+,icons:\w+,onOutsideClick:(\w+)\}=\w+;`,
 		`${0};
@@ -311,49 +322,57 @@ Spicetify.React.useEffect(() => {
 }, []);`)
 
 	// React Component: Context Menu and Right Click Menu
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.ReactComponent.ContextMenu, Spicetify.ReactComponent.RightClickMenu",
 		&input,
 		`(const \w+)(=\w+=>\w+\(\)\.createElement\(([\w\.]+),\w+\(\)\(\{\},\w+,\{action:"open",trigger:"right-click"\}\)\)\})`,
 		`Spicetify.ReactComponent.ContextMenu=${3};${1}=Spicetify.ReactComponent.RightClickMenu${2}`)
 
 	// React Component: Context Menu - Menu
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.ReactComponent.Menu",
 		&input,
 		`=\(\{children:\w+,onClose:\w+,getInitialFocusElement:\w+\}\)`,
 		`=Spicetify.ReactComponent.Menu${0}`)
 
 	// React Component: Context Menu - Menu Item
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.ReactComponent.MenuItem",
 		&input,
 		`=\w+=>\{let\{children:\w+,icon:\w+`,
 		`=Spicetify.ReactComponent.MenuItem${0}`)
 
 	// React Component: Album Context Menu items
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.ReactComponent.AlbumMenu",
 		&input,
 		`(const \w+)(=\w+\(\)\.memo\(\(\(\{uri:\w+,sharingInfo:\w+,onRemoveCallback:\w+\}\)=>\w+\(\)\.createElement\([\w\.]+,\{value:"album"\})`,
 		`${1}=Spicetify.ReactComponent.AlbumMenu${2}`)
 
 	// React Component: Show Context Menu items
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.ReactComponent.PodcastShowMenu",
 		&input,
 		`(const \w+)(=\w+\(\)\.memo\(\(\(\{uri:\w+,sharingInfo:\w+,onRemoveCallback:\w+\}\)=>\w+\(\)\.createElement\([\w\.]+,\{value:"show"\})`,
 		`${1}=Spicetify.ReactComponent.PodcastShowMenu${2}`)
 
 	// React Component: Artist Context Menu items
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.ReactComponent.ArtistMenu",
 		&input,
 		`(const \w+)(=\w+\(\)\.memo\(\(\(\{uri:\w+,sharingInfo:\w+,onRemoveCallback:\w+\}\)=>\w+\(\)\.createElement\([\w\.]+,\{value:"artist"\})`,
 		`${1}=Spicetify.ReactComponent.ArtistMenu${2}`)
 
 	// React Component: Playlist Context Menu items
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.ReactComponent.PlaylistMenu",
 		&input,
 		`(const \w+)(=\w+\(\)\.memo\(\(\(\{uri:\w+,onRemoveCallback:\w+\}\))`,
 		`${1}=Spicetify.ReactComponent.PlaylistMenu${2}`)
 
 	// Locale
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.Locale",
 		&input,
 		`this\._dictionary=\{\},`,
 		`${0}Spicetify.Locale=this,`)
@@ -363,19 +382,22 @@ Spicetify.React.useEffect(() => {
 
 func exposeAPIs_vendor(input string) string {
 	// URI
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.URI",
 		&input,
 		`,(\w+)\.prototype\.toAppType`,
 		`,(globalThis.Spicetify.URI=${1})${0}`)
 
 	// Mousetrap
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.Mousetrap",
 		&input,
 		`,(\w+\.Mousetrap=(\w+))`,
 		`;Spicetify.Mousetrap=${2};${1}`)
 
 	// Context Menu hook
-	utils.Replace(
+	utils.HookReplace(
+		"Spicetify.ContextMenu",
 		&input,
 		`\w+\("onMount",\[(\w+)\]\)`,
 		`${0};
@@ -394,7 +416,8 @@ if (${1}.popper?.firstChild?.id === "context-menu") {
 	}
 };0`)
 
-	utils.ReplaceOnce(
+	utils.HookReplaceOnce(
+		"Spicetify.ReactDOM",
 		&input,
 		`(\w+=)(\{createPortal:\w+)`,
 		`${1}Spicetify.ReactDOM=${2}`)

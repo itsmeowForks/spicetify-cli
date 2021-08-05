@@ -178,6 +178,27 @@ func ReplaceOnce(input *string, regexpTerm string, replaceTerm string) {
 	}
 }
 
+func HookReplace(name string, input *string, regexpTerm string, replaceTerm string) {
+	re := regexp.MustCompile(regexpTerm)
+	matches := re.FindAllString(*input, -1)
+	if len(matches) > 0 {
+		*input = re.ReplaceAllString(*input, replaceTerm)
+	} else {
+		PrintWarning("Hook fail: " + name);
+	}
+}
+
+func HookReplaceOnce(name string, input *string, regexpTerm string, replaceTerm string) {
+	re := regexp.MustCompile(regexpTerm)
+	matches := re.FindAllString(*input, -1)
+	if len(matches) > 0 {
+		toReplace := re.ReplaceAllString(matches[0], replaceTerm)
+		*input = strings.Replace(*input, matches[0], toReplace, 1)
+	} else {
+		PrintWarning("Hook fail: " + name);
+	}
+}
+
 // ModifyFile opens file, changes file content by executing
 // `repl` callback function and writes new content.
 func ModifyFile(path string, repl func(string) string) {
