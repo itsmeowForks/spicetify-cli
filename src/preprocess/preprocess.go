@@ -199,8 +199,9 @@ func colorVariableReplaceForJS(content string) string {
 
 func disableSentry(input string) string {
 	// utils.Replace(&input, `sentry\.install\(\)[,;]`, "")
-	utils.HookReplace("Sentry disable", &input, `;if\(\w+\.type===\w+\.\w+\.LOG_INTERACTION`, ";return${0}")
-	utils.HookReplace("Sentry disable 2", &input, `\("https://\w+@sentry.io/\d+"`, `;("https://null@127.0.0.1/0"`)
+	// TODO Broken hooks
+	//utils.Replace(&input, `;if\(\w+\.type===\w+\.\w+\.LOG_INTERACTION`, ";return${0}")
+	//utils.Replace(&input, `\("https://\w+@sentry.io/\d+"`, `;("https://null@127.0.0.1/0"`)
 	return input
 }
 
@@ -289,15 +290,13 @@ func exposeAPIs_main(input string) string {
 			// set t = e.sent, call Promise.all for APIs, then add Spicetify APIs to object
 			code := found[1] + ";" + found[2] + ".then(v => {Spicetify.Platform = {};"
 
-			i := 0
-			for _, apiFunc := range splitted {
+			for apiFuncIndex, apiFunc := range splitted {
 				name := re.ReplaceAllString(apiFunc, `${1}`)
 
 				if strings.HasPrefix(name, "get") {
 					name = strings.Replace(name, "get", "", 1)
 				}
-				code += "Spicetify.Platform[\"" + name + "\"] = v[" + fmt.Sprint(i) + "];"
-				i = i + 1
+				code += "Spicetify.Platform[\"" + name + "\"] = v[" + fmt.Sprint(apiFuncIndex) + "];"
 			}
 			code += "});"
 			// Promise.all(...).then(...); return t = e.sent, e.next = 6, Promise.all(...);
@@ -325,15 +324,15 @@ Spicetify.React.useEffect(() => {
 	utils.HookReplace(
 		"Spicetify.ReactComponent.ContextMenu, Spicetify.ReactComponent.RightClickMenu",
 		&input,
-		`(const \w+)(=\w+=>\w+\(\)\.createElement\(([\w\.]+),\w+\(\)\(\{\},\w+,\{action:"open",trigger:"right-click"\}\)\)\})`,
-		`Spicetify.ReactComponent.ContextMenu=${3};${1}=Spicetify.ReactComponent.RightClickMenu${2}`)
+		`return (\w+\(\)\.createElement\(([\w\.]+),\w+\(\)\(\{\},\w+,\{action:"open",trigger:"right-click"\}\)\))`,
+		`Spicetify.ReactComponent.ContextMenu=${2};Spicetify.ReactComponent.RightClickMenu=${1};return Spicetify.ReactComponent.RightClickMenu`)
 
 	// React Component: Context Menu - Menu
 	utils.HookReplace(
 		"Spicetify.ReactComponent.Menu",
 		&input,
-		`=\(\{children:\w+,onClose:\w+,getInitialFocusElement:\w+\}\)`,
-		`=Spicetify.ReactComponent.Menu${0}`)
+		`return (\w+\(\)\.createElement\("ul",\w+\(\)\(\{tabIndex:-?\d+,ref:\w+,role:"menu","data-depth":\w+\},\w+\),\w+\))`,//`\w+\(\)\.createElement\([\w\.]+,\{onClose:[\w\.]+,getInitialFocusElement:`,//`\w+\(\)\.createElement\([\w\.]+,\{className:[\w\.]+,onClose:[\w\.]+,onKeyDown:[\w\.]+,onKeyUp:[\w\.]+,getInitialFocusElement:[\w\.]+\},[\w\.]+\)`,
+		`return Spicetify.ReactComponent.Menu=${1}`)
 
 	// React Component: Context Menu - Menu Item
 	utils.HookReplace(
