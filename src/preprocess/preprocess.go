@@ -269,7 +269,7 @@ func exposeAPIs_main(input string) string {
 	utils.HookReplaceOnce(
 		"Spicetify.React",
 		&input,
-		`\w+=\(\w+,(\w+)\.lazy\)\(\(function\(\)\{return Promise\.resolve\(\)\.then\(\w+\.bind\(\w+,\w+\)\)\}\)\);`,
+		`\w+=\(\w+,(\w+)\.lazy\)\(\(\(\)=>Promise\.resolve\(\)\.then\(\w+\.bind\(\w+,\w+\)\)\)\);`,
 		`${0}Spicetify.React=${1};`)
 
 	utils.HookReplace(
@@ -324,15 +324,15 @@ Spicetify.React.useEffect(() => {
 	utils.HookReplace(
 		"Spicetify.ReactComponent.ContextMenu, Spicetify.ReactComponent.RightClickMenu",
 		&input,
-		`return (\w+\(\)\.createElement\(([\w\.]+),\w+\(\)\(\{\},\w+,\{action:"open",trigger:"right-click"\}\)\))`,
-		`Spicetify.ReactComponent.ContextMenu=${2};Spicetify.ReactComponent.RightClickMenu=${1};return Spicetify.ReactComponent.RightClickMenu`)
+		`=(\w+)=>(\w+\(\)\.createElement\(([\w\.]+),\(\w+,[\w\.]+\)\(\{\},\w+,\{action:"open",trigger:"right-click"\}\)\))`,
+		`=Spicetify.ReactComponent.RightClickMenu=${1}=>${2};Spicetify.ReactComponent.ContextMenu=${3}`)
 
 	// React Component: Context Menu - Menu
 	utils.HookReplace(
 		"Spicetify.ReactComponent.Menu",
 		&input,
-		`return (\w+\(\)\.createElement\("ul",\w+\(\)\(\{tabIndex:-?\d+,ref:\w+,role:"menu","data-depth":\w+\},\w+\),\w+\))`,//`\w+\(\)\.createElement\([\w\.]+,\{onClose:[\w\.]+,getInitialFocusElement:`,//`\w+\(\)\.createElement\([\w\.]+,\{className:[\w\.]+,onClose:[\w\.]+,onKeyDown:[\w\.]+,onKeyUp:[\w\.]+,getInitialFocusElement:[\w\.]+\},[\w\.]+\)`,
-		`return Spicetify.ReactComponent.Menu=${1}`)
+		`=\(\{children:\w+,onClose:\w+,getInitialFocusElement:\w+\}\)`,
+		`=Spicetify.ReactComponent.Menu${0}`)
 
 	// React Component: Context Menu - Menu Item
 	utils.HookReplace(
