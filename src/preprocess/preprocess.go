@@ -345,7 +345,7 @@ Spicetify.React.useEffect(() => {
 	utils.HookReplace(
 		"Spicetify.ReactComponent.ContextMenu, Spicetify.ReactComponent.RightClickMenu",
 		&input,
-		`=(\w+)=>(\w+\(\)\.createElement\(([\w\.]+),\(\w+,[\w\.]+\)\(\{\},\w+,\{action:"open",trigger:"right-click"\}\)\))`,
+		`=(\w+)=>(\w+\(\)\.createElement\(([\w\.]+),\w*\((\w+,[\w\.]+)?\)\(\{\},\w+,\{action:"open",trigger:"right-click"\}\)\))`,
 		`=Spicetify.ReactComponent.RightClickMenu=${1}=>${2};Spicetify.ReactComponent.ContextMenu=${3}`)
 
 	// React Component: Context Menu - Menu
