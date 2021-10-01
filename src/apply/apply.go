@@ -210,7 +210,7 @@ func insertCustomApp(jsPath string, flags Flag) {
 		utils.HookReplace(
 			"Spicetify._sidebarItemToClone",
 			&content,
-			`\w+\(\)\.createElement\("li",\{className:\w+\},\w+\(\)\.createElement\(\w+,\{uri:"spotify:user:@:collection",to:"/collection"\}`,
+			`\w+\(\)\.createElement\("li",\{className:[\w$]+\},\w+\(\)\.createElement\(\w+,\{uri:"spotify:user:@:collection",to:"/collection"\}`,
 			`Spicetify._sidebarItemToClone=${0}`)
 
 		utils.HookReplaceOnce(
@@ -221,7 +221,7 @@ func insertCustomApp(jsPath string, flags Flag) {
 
 		sidebarItemMatch := utils.SeekToCloseParen(
 			content,
-			`\("li",\{className:\w+\},\w+\(\)\.createElement\(\w+,\{uri:"spotify:user:@:collection",to:"/collection"\}`,
+			`\("li",\{className:[\w$]+\},\w+\(\)\.createElement\(\w+,\{uri:"spotify:user:@:collection",to:"/collection"\}`,
 			'(', ')')
 
 		content = strings.Replace(
