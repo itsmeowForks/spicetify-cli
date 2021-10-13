@@ -45,7 +45,7 @@ const Spicetify = {
         getRepeat: () => Spicetify.Player.origin._state.repeat,
         setRepeat: (r) => { Spicetify.Player.origin.setRepeat(r) },
         getMute: () => Spicetify.Player.getVolume() === 0,
-        toggleMute: () => { document.querySelector(".volume-bar__icon-button ").click() },
+        toggleMute: () => { document.querySelector(".volume-bar__icon-button").click() },
         setMute: (b) => {
             const isMuted = Spicetify.Player.getMute();
             if ((b && !isMuted) || (!b && isMuted)) {
@@ -58,7 +58,7 @@ const Spicetify = {
             seconds -= minutes * 60;
             return `${minutes}:${seconds > 9 ? "" : "0"}${String(seconds)}`;
         },
-        getHeart: () => document.querySelector('.control-button-heart button')?.ariaChecked === "true",
+        getHeart: () => document.querySelector('.control-button-heart')?.ariaChecked === "true",
         pause: () => { Spicetify.Player.origin.pause() },
         play: () => { Spicetify.Player.origin.resume() },
         playUri: async (uri, context = {}, options = {}) => {
@@ -78,7 +78,7 @@ const Spicetify = {
         },
         skipBack: (amount = 15e3) => {Spicetify.Player.origin.seekBackward(amount)},
         skipForward: (amount = 15e3) => {Spicetify.Player.origin.seekForward(amount)},
-        toggleHeart: () => {document.querySelector('.control-button-heart button')?.click()},
+        toggleHeart: () => {document.querySelector('.control-button-heart')?.click()},
     },
     test: () => {
         const SPICETIFY_METHOD = [
@@ -186,7 +186,7 @@ const Spicetify = {
     }
 
     Spicetify.Player.origin._cosmos.sub(
-        "sp://player/v2/main", 
+        "sp://player/v2/main",
         (data) => {
             if (!data || !data.track) return;
             const lastData = Spicetify.Player.data;
@@ -451,7 +451,7 @@ Spicetify.SVGIcons = {
 
 class _HTMLContextMenuItem extends HTMLLIElement {
     constructor({
-        name, 
+        name,
         disabled = false,
         icon = undefined,
         divider = false,
@@ -654,7 +654,7 @@ Spicetify.Menu = (function() {
 Spicetify.ContextMenu = (function () {
     let itemList = new Set();
     const iconList = Object.keys(Spicetify.SVGIcons);
-    
+
     class Item {
         constructor(name, onClick, shouldAdd = (uris) => true, icon = undefined, disabled = false) {
             this.onClick = onClick;
@@ -806,7 +806,7 @@ Spicetify.ContextMenu = (function () {
                     instance._tippy?.props?.onClickOutside();
                 }
             };
-            
+
             elemList.push(item._element);
         }
         list.prepend(...elemList);
@@ -917,8 +917,8 @@ class _HTMLGenericModal extends HTMLElement {
     }) {
         this.innerHTML = `
 <div class="GenericModal__overlay" style="z-index: 100;">
-    <div class="GenericModal" tabindex="-1" role="dialog" aria-label="${title}" aria-modal="true">
-        <div class="main-trackCreditsModal-container">
+    <div class="GenericModal" tabindex="-1" role="dialog" aria-label="${title}" aria-modal="true" style="width: 40rem; height: 90%">
+        <div class="main-trackCreditsModal-container" style="height: inherit; overflow: auto">
             <div class="main-trackCreditsModal-header">
                 <h1 class="main-type-alto" as="h1">${title}</h1>
                 <button aria-label="Close" class="main-trackCreditsModal-closeBtn"><svg width="18" height="18" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><title>Close</title><path d="M31.098 29.794L16.955 15.65 31.097 1.51 29.683.093 15.54 14.237 1.4.094-.016 1.508 14.126 15.65-.016 29.795l1.414 1.414L15.54 17.065l14.144 14.143" fill="currentColor" fill-rule="evenodd"></path></svg></button>
@@ -934,7 +934,7 @@ class _HTMLGenericModal extends HTMLElement {
         const main = this.querySelector("main");
 
         let hidePopup = this.hide.bind(this);
-        
+
         // Listen for click events on Overlay
         this.querySelector(".GenericModal__overlay").addEventListener('click', (event) => {
             if (!this.querySelector('.GenericModal').contains(event.target))
