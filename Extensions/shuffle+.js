@@ -149,7 +149,7 @@
      */
     const searchFolder = (rows, uri) => {
         for (const r of rows) {
-            if (r.type !== "folder") {
+            if (r.type !== "folder" || r.rows == null) {
                 continue;
             }
 
@@ -189,15 +189,7 @@
 
         fetchNested(requestFolder);
 
-        return await Promise.all(requestPlaylists).then((playlists) => {
-            const trackList = [];
-
-            playlists.forEach((p) => {
-                trackList.push(...p);
-            });
-
-            return trackList;
-        });
+        return (await Promise.all(requestPlaylists)).flat();
     };
 
     /**
@@ -233,7 +225,7 @@
      * @returns {Promise<string[]>}
      */
     const fetchShow = async (uriBase62) => {
-        const res = await Spicetify.CosmosAsync.get(`sp://core-show/unstable/show/${uriBase62}?responseFormat=protobufJson`);
+        const res = await Spicetify.CosmosAsync.get(`sp://core-show/v1/shows/${uriBase62}?responseFormat=protobufJson`);
         const availables = res.items.filter((track) => track.episodePlayState.isPlayable);
         return availables.map((item) => item.episodeMetadata.link);
     };
@@ -329,8 +321,9 @@
                 },
             });
         }
+
         await Spicetify.CosmosAsync.put("sp://player/v2/main/queue", {
-            queue_revision: Spicetify.Queue?.revision,
+            queue_revision: Spicetify.Queue?.queueRevision,
             next_tracks: list.map((uri) => ({
                 uri,
                 provider: context ? "context" : "queue",
@@ -338,7 +331,7 @@
                     is_queued: isQueue,
                 },
             })),
-            prev_tracks: Spicetify.Queue?.prev_tracks,
+            prev_tracks: Spicetify.Queue?.prevTracks,
         });
         success(count);
         Spicetify.Player.next();

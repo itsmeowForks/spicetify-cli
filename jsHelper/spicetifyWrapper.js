@@ -745,6 +745,34 @@ Spicetify.ContextMenu = (function () {
 
     SubMenu.iconList = iconList;
 
+    function _addItemsRecursive(instance, currentItem, uris, uids, contextUri) {
+        if (currentItem._items?.size) {
+            const htmlSubmenu = new _HTMLContextSubmenu({
+                placement: instance.firstChild.dataset.placement,
+            });
+
+            for (const child of currentItem._items) {
+                if (!child.shouldAdd(uris, uids, contextUri)) {
+                    continue;
+                }
+
+                child._element.onclick = () => {
+                    if (!child._disabled) {
+                        child.onClick(uris, uids, contextUri);
+                        htmlSubmenu.remove();
+                        instance._tippy?.props?.onClickOutside();
+                    }
+                };
+                htmlSubmenu.addItem(child._element);
+
+                _addItemsRecursive(instance, child, uris, uids, contextUri);
+            }
+
+            currentItem._submenuElement = htmlSubmenu;
+            currentItem.disabled = currentItem._disabled;
+        }
+    }
+
     function _addItems(instance) {
         const list = instance.querySelector("ul");
         const container = instance.firstChild;
@@ -779,23 +807,7 @@ Spicetify.ContextMenu = (function () {
             }
 
             if (item._items?.size) {
-                const htmlSubmenu = new _HTMLContextSubmenu({
-                    placement: instance.firstChild.dataset.placement,
-                });
-
-                for (const child of item._items) {
-                    child._element.onclick = () => {
-                        if (!child._disabled) {
-                            child.onClick(uris, uids, contextUri);
-                            htmlSubmenu.remove();
-                            instance._tippy?.props?.onClickOutside();
-                        }
-                    };
-                    htmlSubmenu.addItem(child._element);
-                }
-
-                item._submenuElement = htmlSubmenu;
-                item.disabled = item._disabled;
+                _addItemsRecursive(instance, item, uris, uids, contextUri);
                 elemList.push(item._element);
                 continue;
             }
@@ -917,8 +929,8 @@ class _HTMLGenericModal extends HTMLElement {
     }) {
         this.innerHTML = `
 <div class="GenericModal__overlay" style="z-index: 100;">
-    <div class="GenericModal" tabindex="-1" role="dialog" aria-label="${title}" aria-modal="true" style="width: 40rem; height: 90%">
-        <div class="main-trackCreditsModal-container" style="height: inherit; overflow: auto">
+    <div class="GenericModal" tabindex="-1" role="dialog" aria-label="${title}" aria-modal="true">
+        <div class="main-trackCreditsModal-container">
             <div class="main-trackCreditsModal-header">
                 <h1 class="main-type-alto" as="h1">${title}</h1>
                 <button aria-label="Close" class="main-trackCreditsModal-closeBtn"><svg width="18" height="18" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><title>Close</title><path d="M31.098 29.794L16.955 15.65 31.097 1.51 29.683.093 15.54 14.237 1.4.094-.016 1.508 14.126 15.65-.016 29.795l1.414 1.414L15.54 17.065l14.144 14.143" fill="currentColor" fill-rule="evenodd"></path></svg></button>

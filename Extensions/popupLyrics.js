@@ -136,8 +136,15 @@ function PopupLyrics() {
 
                 const meta = body["matcher.track.get"].message.body;
                 const hasSynced = meta.track.has_subtitles;
+                const isRestricted =
+                    body["track.lyrics.get"].message.header.status_code === 200 && body["track.lyrics.get"].message.body.lyrics.restricted;
+                const isInstrumental = meta.track.instrumental;
 
-                if (hasSynced) {
+                if (isRestricted) {
+                    return { error: "Unfortunately we're not authorized to show these lyrics." };
+                } else if (isInstrumental) {
+                    return { error: "Instrumental" };
+                } else if (hasSynced) {
                     const subtitle = body["track.subtitles.get"].message.body.subtitle_list[0].subtitle;
 
                     const lyrics = JSON.parse(subtitle.subtitle_body).map((line) => ({
@@ -154,13 +161,16 @@ function PopupLyrics() {
         }
 
         static async fetchNetease(info) {
-            const searchURL = `https://music.xianqiao.wang/neteaseapi/search?limit=10&type=1&keywords=`;
-            const lyricURL = `https://music.xianqiao.wang/neteaseapi/lyric?id=`;
+            const searchURL = `https://music.xianqiao.wang/neteaseapiv2/search?limit=10&type=1&keywords=`;
+            const lyricURL = `https://music.xianqiao.wang/neteaseapiv2/lyric?id=`;
+            const requestHeader = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:93.0) Gecko/20100101 Firefox/93.0",
+            };
 
             const cleanTitle = LyricUtils.removeSongFeat(LyricUtils.normalize(info.title));
             const finalURL = searchURL + encodeURIComponent(`${cleanTitle} ${info.artist}`);
 
-            const searchResults = await CosmosAsync.get(finalURL);
+            const searchResults = await CosmosAsync.get(finalURL, null, requestHeader);
             const items = searchResults.result.songs;
             if (!items || !items.length) {
                 return { error: "Cannot find track" };
@@ -170,7 +180,7 @@ function PopupLyrics() {
             let itemId = items.findIndex((val) => LyricUtils.capitalize(val.album.name) === album);
             if (itemId === -1) itemId = 0;
 
-            const meta = await CosmosAsync.get(lyricURL + items[itemId].id);
+            const meta = await CosmosAsync.get(lyricURL + items[itemId].id, null, requestHeader);
             let lyricStr = meta.lrc;
 
             if (!lyricStr || !lyricStr.lyric) {
@@ -248,8 +258,8 @@ function PopupLyrics() {
         smooth: boolLocalStorage("popup-lyrics:smooth"),
         centerAlign: boolLocalStorage("popup-lyrics:center-align"),
         showCover: boolLocalStorage("popup-lyrics:show-cover"),
-        fontSize: LocalStorage.get("popup-lyrics:font-size"),
-        blurSize: LocalStorage.get("popup-lyrics:blur-size"),
+        fontSize: Number(LocalStorage.get("popup-lyrics:font-size")),
+        blurSize: Number(LocalStorage.get("popup-lyrics:blur-size")),
         fontFamily: LocalStorage.get("popup-lyrics:font-family") || "spotify-circular",
         ratio: LocalStorage.get("popup-lyrics:ratio") || "11",
         services: {
@@ -313,6 +323,7 @@ function PopupLyrics() {
 
     let lyricVideoIsOpen = false;
     lyricVideo.onenterpictureinpicture = () => {
+        lyricVideo.play();
         lyricVideoIsOpen = true;
         tick(userConfigs);
         updateTrack();
@@ -382,10 +393,8 @@ function PopupLyrics() {
             try {
                 const data = await service.call(info);
                 console.log(data);
-                if (!data.error && data.lyrics) {
-                    sharedData = data;
-                    return;
-                }
+                sharedData = data;
+                return;
             } catch (err) {
                 error = err;
             }
@@ -703,7 +712,11 @@ function PopupLyrics() {
         const { error, lyrics } = sharedData;
 
         if (error) {
-            drawText(lyricCtx, error, "red");
+            if (error === "Instrumental") {
+                drawText(lyricCtx, error);
+            } else {
+                drawText(lyricCtx, error, "red");
+            }
         } else if (!lyrics) {
             drawText(lyricCtx, "No lyric");
         } else if (audio.duration && lyrics.length) {
