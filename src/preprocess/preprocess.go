@@ -119,6 +119,9 @@ func Start(version string, extractedAppsPath string, flags Flag) {
 					utils.Replace(&content, k, v)
 				}
 				content = colorVariableReplaceForJS(content)
+
+				// Webpack name changed from v1.1.72
+				utils.Replace(&content, "webpackChunkclient_web", "webpackChunkopen")
 				return content
 			})
 		case ".css":
@@ -145,8 +148,10 @@ func Start(version string, extractedAppsPath string, flags Flag) {
 		case ".html":
 			utils.ModifyFile(path, func(content string) string {
 				var tags string
+				tags += `<link rel="stylesheet" class="userCSS" href="colors.css">` + "\n"
+				tags += `<link rel="stylesheet" class="userCSS" href="user.css">` + "\n"
+
 				if flags.ExposeAPIs {
-					tags += `<link rel="stylesheet" class="userCSS" href="user.css">` + "\n"
 					tags += `<script src="helper/spicetifyWrapper.js"></script>` + "\n"
 					tags += `<!-- spicetify helpers -->` + "\n"
 				}
@@ -255,13 +260,6 @@ func removeRTL(input string) string {
 }
 
 func exposeAPIs_main(input string) string {
-	// Player
-	utils.HookReplace(
-		"Spicetify.Player.origin",
-		&input,
-		`this\._cosmos=(\w+),this\._defaultFeatureVersion=\w+`,
-		`(globalThis.Spicetify.Player.origin=this),${0}`)
-
 	// Show Notification
 	utils.HookReplace(
 		"Spicetify.showNotification",
@@ -314,6 +312,13 @@ func exposeAPIs_main(input string) string {
 			input = strings.Replace(input, found[0], code+found[0], 1)
 		}
 	}
+
+	// Player
+	utils.HookReplace(
+		"Spicetify.Player.origin",
+		&input,
+		`(Spicetify.Platform\["PlayerAPI"\]=)`,
+		`${1}Spicetify.Player.origin=`)
 
 	// Profile Menu hook v1.1.56
 	utils.HookReplace(
